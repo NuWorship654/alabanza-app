@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="theme-color" content="#080612"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Alabanza"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<title>Alabanza</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet"/>
+<style>
+/* ════════════════════════════════════════
+   BASE TOKENS
+════════════════════════════════════════ */
+:root{
+  --ink:   #080612;
+  --deep:  #0e0a1f;
+  --layer: #131028;
+  --card:  #1a1535;
+  --lift:  #211d3e;
+  --rim:   rgba(167,139,250,.13);
+  --glow:  rgba(139,92,246,.25);
+  --v:     #8b5cf6;    /* violet primary */
+  --v2:    #a78bfa;    /* violet light  */
+  --v3:    #ddd6fe;    /* violet pale   */
+  --rose:  #f43f5e;
+  --amber: #f59e0b;
+  --teal:  #2dd4bf;
+  --text:  #ede9fe;
+  --sub:   #a89dc8;
+  --faint: rgba(167,139,250,.07);
+  --r:     13px;
+  --sb: env(safe-area-inset-bottom,0px);
+  --st: env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none}
+body{
+  font-family:'DM Sans',sans-serif;color:var(--text);
+  background:var(--ink);font-size:14px;line-height:1.5;
+  min-height:100vh;min-height:-webkit-fill-available;
+}
+/* Starfield bg */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 100% 55% at 50% -5%, rgba(91,33,182,.28) 0%,transparent 68%),
+    radial-gradient(ellipse 60% 40% at 85% 85%, rgba(139,92,246,.1) 0%,transparent 55%),
+    radial-gradient(ellipse 40% 30% at 10% 60%, rgba(244,63,94,.06) 0%,transparent 50%);
+  pointer-events:none;z-index:0;
+}
+#root{position:relative;z-index:1;height:100%}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(139,92,246,.3);border-radius:2px}
+
+/* ════════════════════════════════════════
+   LAYOUT
+════════════════════════════════════════ */
+#loginWrap{
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;padding:20px;
+}
+#appWrap{display:none;flex-direction:column;height:100vh;height:-webkit-fill-available}
+
+.topbar{
+  flex-shrink:0;height:54px;
+  padding-top:var(--st);
+  background:rgba(8,6,18,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--rim);
+  display:flex;align-items:center;justify-content:space-between;padding-left:16px;padding-right:12px;
+  position:relative;z-index:50;
+}
+.t-logo{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--v3);
+  display:flex;align-items:center;gap:7px;letter-spacing:.5px}
+.t-logo .cr{color:var(--v2);font-size:19px}
+.t-right{display:flex;align-items:center;gap:6px}
+
+/* Scroll area */
+.scroller{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding-bottom:calc(68px + var(--sb))}
+@media(min-width:820px){.scroller{padding-bottom:0}}
+
+/* Bottom nav */
+.bnav{
+  position:fixed;bottom:0;left:0;right:0;
+  padding-bottom:var(--sb);
+  background:rgba(8,6,18,.95);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--rim);
+  display:flex;z-index:50;
+}
+@media(min-width:820px){
+  .bnav{position:static;flex-direction:row;justify-content:center;
+    border-top:none;border-bottom:1px solid var(--rim);padding-bottom:0}
+  .scroller{padding-bottom:0}
+}
+.bnav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;padding:8px 4px 6px;cursor:pointer;
+  border:none;background:none;color:var(--sub);
+  font-family:'DM Sans',sans-serif;font-size:9px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.6px;transition:color .18s;
+}
+.bnav-btn .ico{font-size:19px;line-height:1;transition:transform .18s}
+.bnav-btn.on{color:var(--v2)}
+.bnav-btn.on .ico{transform:scale(1.12);filter:drop-shadow(0 0 6px var(--v))}
+@media(min-width:820px){
+  .bnav-btn{flex:none;flex-direction:row;gap:7px;padding:14px 20px;font-size:11px}
+  .bnav-btn .ico{font-size:15px}
+}
+
+/* Pages */
+.pg{display:none;animation:up .22s ease}
+.pg.on{display:block}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Content wrapper */
+.cw{padding:18px 14px;max-width:900px;margin:0 auto}
+@media(min-width:600px){.cw{padding:24px 20px}}
+
+/* ════════════════════════════════════════
+   CARD
+════════════════════════════════════════ */
+.card{background:var(--card);border:1px solid var(--rim);border-radius:var(--r);padding:18px}
+.card+.card{margin-top:12px}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap}
+.ct{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;color:var(--v3);letter-spacing:.3px}
+
+/* ════════════════════════════════════════
+   BUTTONS
+════════════════════════════════════════ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  padding:9px 16px;border-radius:9px;font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:600;border:none;cursor:pointer;
+  transition:all .16s;-webkit-user-select:none;user-select:none;white-space:nowrap;
+}
+.btn:active{transform:scale(.96)}
+.btn-v{background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:#fff;box-shadow:0 3px 16px rgba(109,40,217,.35)}
+.btn-v:hover{box-shadow:0 5px 22px rgba(109,40,217,.5)}
+.btn-o{background:transparent;color:var(--v2);border:1px solid rgba(139,92,246,.35)}
+.btn-o:hover{background:rgba(139,92,246,.1)}
+.btn-g{background:rgba(255,255,255,.05);color:var(--text);border:1px solid var(--rim)}
+.btn-g:hover{background:rgba(255,255,255,.09)}
+.btn-r{background:rgba(244,63,94,.1);color:#fb7185;border:1px solid rgba(244,63,94,.22)}
+.btn-r:hover{background:rgba(244,63,94,.18)}
+.btn-t{background:rgba(45,212,191,.1);color:var(--teal);border:1px solid rgba(45,212,191,.22)}
+.btn-a{background:linear-gradient(135deg,#b45309,#f59e0b);color:#000;font-weight:700}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:8px}
+.btn-xs{padding:4px 9px;font-size:11px;border-radius:7px}
+.btn-full{width:100%}
+
+/* ════════════════════════════════════════
+   FORM
+════════════════════════════════════════ */
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:10px;color:var(--sub);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-weight:600}
+input,select,textarea{
+  width:100%;background:rgba(255,255,255,.04);border:1px solid var(--rim);
+  border-radius:9px;padding:10px 12px;color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:14px;outline:none;
+  transition:border-color .18s,box-shadow .18s;-webkit-appearance:none;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--v);box-shadow:0 0 0 3px rgba(139,92,246,.12)}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M0 0l5 7 5-7z' fill='%23a89dc8'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 11px center;padding-right:32px}
+select option{background:#1a1535}
+textarea{resize:vertical;min-height:68px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.fr{grid-template-columns:1fr}}
+
+/* ════════════════════════════════════════
+   BADGES
+════════════════════════════════════════ */
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;
+  font-size:10px;font-weight:700;letter-spacing:.3px}
+.tag-v{background:rgba(139,92,246,.15);color:var(--v2);border:1px solid rgba(139,92,246,.2)}
+.tag-g{background:rgba(45,212,191,.12);color:var(--teal);border:1px solid rgba(45,212,191,.2)}
+.tag-a{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.2)}
+.tag-r{background:rgba(244,63,94,.12);color:#fb7185;border:1px solid rgba(244,63,94,.2)}
+.tag-b{background:rgba(96,165,250,.12);color:#93c5fd;border:1px solid rgba(96,165,250,.2)}
+.rtag{padding:2px 9px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px}
+.r-admin  {background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
+.r-lider  {background:rgba(139,92,246,.15);color:var(--v2);border:1px solid var(--rim)}
+.r-pastor {background:rgba(45,212,191,.15);color:var(--teal);border:1px solid rgba(45,212,191,.3)}
+.r-alabanza{background:rgba(96,165,250,.15);color:#93c5fd;border:1px solid rgba(96,165,250,.3)}
+
+/* ════════════════════════════════════════
+   FILE PILLS
+════════════════════════════════════════ */
+.pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.pill{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:6px;
+  font-size:11px;font-weight:700;text-decoration:none;cursor:pointer;border:none;transition:opacity .15s}
+.pill:hover{opacity:.75}
+.p-pdf {background:rgba(244,63,94,.15);color:#fda4af}
+.p-note{background:rgba(96,165,250,.15);color:#93c5fd}
+.p-mp3 {background:rgba(45,212,191,.15);color:#5eead4}
+.p-yt  {background:rgba(239,68,68,.2);color:#fca5a5}
+
+/* ════════════════════════════════════════
+   MODAL (bottom sheet on mobile)
+════════════════════════════════════════ */
+.overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  z-index:200;align-items:flex-end;justify-content:center;
+}
+.overlay.on{display:flex}
+@media(min-width:640px){.overlay{align-items:center;padding:20px}}
+.modal{
+  background:var(--deep);border:1px solid var(--rim);
+  width:100%;max-width:580px;
+  max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  border-radius:18px 18px 0 0;padding:20px 18px;
+  padding-bottom:calc(20px + var(--sb));
+  animation:mup .26s cubic-bezier(.32,1.1,.25,1);
+  box-shadow:0 -10px 60px rgba(0,0,0,.55);
+}
+@media(min-width:640px){
+  .modal{border-radius:16px;padding:26px;animation:up .22s ease;max-height:86vh}}
+.mhandle{width:36px;height:3px;background:var(--rim);border-radius:2px;margin:0 auto 16px;display:block}
+@media(min-width:640px){.mhandle{display:none}}
+.mtitle{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--v3);margin-bottom:18px}
+.mfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+@keyframes mup{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:translateY(0)}}
+
+/* Close on overlay click */
+.overlay{cursor:pointer}
+.modal{cursor:default}
+
+/* ════════════════════════════════════════
+   LOGIN
+════════════════════════════════════════ */
+.lbox{
+  background:var(--card);border:1px solid var(--rim);border-radius:18px;
+  padding:38px 26px;width:100%;max-width:360px;
+  box-shadow:0 24px 64px rgba(0,0,0,.55),0 0 80px rgba(91,33,182,.12);
+  animation:up .4s ease;
+}
+.llogo{text-align:center;margin-bottom:26px}
+.llogo .big-cross{font-size:42px;display:block;filter:drop-shadow(0 0 16px var(--v));margin-bottom:6px}
+.llogo h1{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;
+  color:var(--v3);letter-spacing:2px}
+.llogo p{font-size:11px;color:var(--sub);margin-top:3px}
+
+/* ════════════════════════════════════════
+   STATS
+════════════════════════════════════════ */
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.sbox{background:var(--layer);border:1px solid var(--rim);border-radius:11px;
+  padding:14px;text-align:center}
+.snum{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;
+  color:var(--v3);line-height:1}
+.slbl{font-size:10px;color:var(--sub);margin-top:3px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.5px}
+
+/* ════════════════════════════════════════
+   CALENDAR
+════════════════════════════════════════ */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cal-month{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--v3)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dow{text-align:center;font-size:10px;font-weight:700;color:var(--sub);
+  text-transform:uppercase;letter-spacing:.5px;padding:4px 0}
+.cal-day{
+  aspect-ratio:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-start;padding:3px 2px;
+  border-radius:8px;cursor:pointer;transition:background .15s;
+  font-size:12px;font-weight:500;color:var(--sub);position:relative;
+  min-height:38px;
+}
+.cal-day:hover{background:var(--faint)}
+.cal-day.today{background:rgba(139,92,246,.18);color:var(--v2);font-weight:800}
+.cal-day.today .cal-dn{
+  background:var(--v);color:#fff;border-radius:50%;
+  width:22px;height:22px;display:flex;align-items:center;justify-content:center;
+}
+.cal-day.has-ev{color:var(--text)}
+.cal-day.other-month{opacity:.3}
+.cal-dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;margin-top:2px}
+.cal-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.cal-dn{font-size:12px;line-height:22px}
+.ev-domingo {background:var(--v)}
+.ev-semana  {background:var(--teal)}
+.ev-especial{background:var(--amber)}
+.ev-conf    {background:var(--rose)}
+
+/* Event legend */
+.ev-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.ev-leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sub)}
+.ev-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* Day events popup */
+.day-events{background:var(--layer);border:1px solid var(--rim);border-radius:10px;
+  padding:12px;margin-top:10px}
+.day-ev-title{font-size:11px;color:var(--sub);font-weight:700;
+  text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
+
+/* ════════════════════════════════════════
+   SERVICE CARDS
+════════════════════════════════════════ */
+.svc-card{background:var(--layer);border:1px solid var(--rim);border-radius:11px;
+  padding:14px;cursor:pointer;transition:all .18s}
+.svc-card:hover{border-color:rgba(139,92,246,.35);transform:translateY(-1px);
+  background:var(--lift)}
+.svc-card:active{transform:scale(.99)}
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.svc-date{font-size:10px;color:var(--sub);margin-bottom:3px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px}
+.svc-name{font-size:15px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.svc-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+
+/* ════════════════════════════════════════
+   SONG CARDS
+════════════════════════════════════════ */
+.song-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.song-card{background:var(--layer);border:1px solid var(--rim);border-radius:11px;
+  padding:14px;transition:all .18s}
+.song-card:hover{border-color:rgba(139,92,246,.35);transform:translateY(-1px)}
+.song-card h3{font-size:14px;font-weight:700;margin-bottom:2px}
+.song-card .sub{font-size:11px;color:var(--sub);margin-bottom:8px}
+.song-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+
+/* ════════════════════════════════════════
+   SERVICE SONG LIST
+════════════════════════════════════════ */
+.sslist{display:flex;flex-direction:column;gap:6px}
+.ssi{display:flex;align-items:center;gap:8px;
+  background:var(--ink);border:1px solid var(--rim);
+  border-radius:9px;padding:9px 11px}
+.ss-num{width:22px;height:22px;border-radius:50%;flex-shrink:0;
+  background:rgba(139,92,246,.2);color:var(--v2);
+  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}
+
+/* ════════════════════════════════════════
+   PICKER
+════════════════════════════════════════ */
+.plist{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;
+  gap:4px;margin-top:8px;-webkit-overflow-scrolling:touch}
+.pitem{display:flex;align-items:center;justify-content:space-between;
+  padding:9px 12px;border-radius:9px;border:1px solid var(--rim);
+  background:var(--ink);cursor:pointer;transition:all .16s}
+.pitem:hover,.pitem.sel{border-color:var(--v);background:rgba(139,92,246,.1)}
+
+/* ════════════════════════════════════════
+   TABLE
+════════════════════════════════════════ */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:380px}
+th{text-align:left;padding:8px 11px;color:var(--sub);font-size:10px;
+  text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--rim);
+  white-space:nowrap;font-weight:800}
+td{padding:10px 11px;border-bottom:1px solid rgba(139,92,246,.06);vertical-align:middle;font-size:13px}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--faint)}
+
+/* ════════════════════════════════════════
+   SEARCH ROW
+════════════════════════════════════════ */
+.srow{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.srow input{flex:1;min-width:140px}
+.srow select{max-width:140px}
+
+/* ════════════════════════════════════════
+   EMPTY
+════════════════════════════════════════ */
+.empty{text-align:center;padding:44px 20px;color:var(--sub)}
+.empty .e{font-size:40px;opacity:.45;display:block;margin-bottom:8px}
+
+/* ════════════════════════════════════════
+   DIVIDER / HELPERS
+════════════════════════════════════════ */
+.sep{height:1px;background:var(--rim);margin:14px 0}
+.muted{color:var(--sub)}.xs{font-size:11px}.sm{font-size:12px}
+.bold{font-weight:700}.flex{display:flex;align-items:center}
+.between{justify-content:space-between}.gap6{gap:6px}.gap8{gap:8px}
+.wrap{flex-wrap:wrap}.mt8{margin-top:8px}.mt12{margin-top:12px}
+.mt16{margin-top:16px}.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}
+.code{background:var(--layer);padding:2px 7px;border-radius:5px;
+  font-family:monospace;font-size:11px;color:var(--v2)}
+
+/* ════════════════════════════════════════
+   TOAST
+════════════════════════════════════════ */
+#toast{
+  position:fixed;top:62px;left:50%;transform:translateX(-50%) translateY(-10px);
+  background:var(--lift);border:1px solid var(--rim);border-radius:10px;
+  padding:10px 18px;font-size:12px;font-weight:700;
+  z-index:999;opacity:0;transition:all .25s;pointer-events:none;
+  white-space:nowrap;max-width:88vw;text-align:center;
+}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.ok{border-color:var(--teal);color:var(--teal)}
+#toast.er{border-color:#fb7185;color:#fb7185}
+
+/* ════════════════════════════════════════
+   NET BANNER
+════════════════════════════════════════ */
+#netbar{
+  position:fixed;top:0;left:0;right:0;z-index:600;
+  padding:7px 16px;text-align:center;font-size:11px;font-weight:700;
+  transform:translateY(-100%);transition:transform .28s;
+}
+#netbar.on{transform:translateY(0)}
+#netbar.off{background:#7f1d1d;color:#fca5a5}
+#netbar.go{background:#064e3b;color:#6ee7b7}
+
+/* ════════════════════════════════════════
+   SYNC DOT
+════════════════════════════════════════ */
+.sdot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px}
+.sdot.live{background:var(--teal);animation:blink 2s infinite}
+.sdot.dead{background:var(--sub)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* CONFIG PAGE */
+.cfg-step{background:var(--layer);border:1px solid var(--rim);border-radius:11px;
+  padding:14px;margin-bottom:10px}
+.cfg-step h3{font-size:13px;font-weight:700;margin-bottom:6px;color:var(--v2)}
+.cfg-step p,.cfg-step li{font-size:12px;color:var(--sub);line-height:1.7}
+.cfg-step ol{padding-left:18px}
+pre{background:var(--ink);border:1px solid var(--rim);border-radius:9px;
+  padding:12px;font-size:10px;color:var(--v2);overflow-x:auto;
+  line-height:1.6;font-family:monospace;margin-top:8px;white-space:pre-wrap;word-break:break-all}
+
+/* Schedule page */
+.schedule-type-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.stt{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;
+  border:1px solid var(--rim);background:transparent;color:var(--sub);
+  font-family:'DM Sans',sans-serif;transition:all .16s}
+.stt.on{background:rgba(139,92,246,.15);color:var(--v2);border-color:rgba(139,92,246,.35)}
+</style>
+</head>
+<body>
+<div id="root">
+
+<!-- NET BAR -->
+<div id="netbar"></div>
+
+<!-- ═══════════ LOGIN ═══════════ -->
+<div id="loginWrap">
+<div class="lbox">
+  <div class="llogo">
+    <span class="big-cross">✝️</span>
+    <h1>ALABANZA</h1>
+    <p>Sistema de Servicios · Acceso Privado</p>
+  </div>
+  <div class="fg"><label>Usuario</label>
+    <input id="lu" type="text" placeholder="tu_usuario" autocomplete="username" autocapitalize="none"
+      onkeydown="if(event.key==='Enter')doLogin()"/>
+  </div>
+  <div class="fg"><label>Contraseña</label>
+    <input id="lp" type="password" placeholder="••••••••" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter')doLogin()"/>
+  </div>
+  <p id="le" style="color:#fb7185;font-size:12px;margin-bottom:10px;display:none;text-align:center"></p>
+  <button class="btn btn-v btn-full" onclick="doLogin()">Entrar →</button>
+  <p style="text-align:center;margin-top:12px;font-size:10px;color:var(--sub)">
+    Solo personal autorizado · Acceso dado por el administrador
+  </p>
+</div>
+</div>
+
+<!-- ═══════════ APP ═══════════ -->
+<div id="appWrap">
+  <div class="topbar">
+    <div class="t-logo"><span class="cr">✝</span>Alabanza</div>
+    <div class="t-right">
+      <span class="flex gap6 xs muted">
+        <span class="sdot dead" id="sdot"></span>
+        <span id="slbl">Local</span>
+      </span>
+      <span id="topRole" class="rtag" style="margin-left:5px"></span>
+      <button class="btn btn-g btn-sm" style="margin-left:5px" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+  <nav class="bnav" id="bnav"></nav>
+  <div class="scroller" id="scroller">
+    <div class="pg" id="pg-home"></div>
+    <div class="pg" id="pg-calendar"></div>
+    <div class="pg" id="pg-services"></div>
+    <div class="pg" id="pg-songs"></div>
+    <div class="pg" id="pg-users"></div>
+    <div class="pg" id="pg-config"></div>
+  </div>
+</div>
+
+<!-- ═══════════ MODALS ═══════════ -->
+
+<!-- Modal: Canción -->
+<div class="overlay" id="mo-song" onclick="oc(event,'mo-song')">
+<div class="modal">
+  <span class="mhandle"></span>
+  <div class="mtitle" id="mo-song-t">Nueva Canción</div>
+  <div class="fr">
+    <div class="fg"><label>Nombre *</label><input id="sn" placeholder="Título"/></div>
+    <div class="fg"><label>Artista/Autor</label><input id="sa" placeholder="Artista"/></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label>Tono / Key</label><input id="sk" placeholder="Ej: G, Am, C#"/></div>
+    <div class="fg"><label>BPM</label><input id="sb" type="number" placeholder="120"/></div>
+  </div>
+  <div class="fg"><label>Etiquetas</label><input id="st" placeholder="adoración, rápida, apertura…"/></div>
+  <div class="fg"><label>Notas del equipo</label><textarea id="sno" placeholder="Observaciones para el equipo…"></textarea></div>
+  <div class="sep"></div>
+  <p class="xs muted mb8">📁 Sube los archivos a <b>Google Drive</b> → clic derecho → Compartir → "Cualquiera con el enlace" → copia el link</p>
+  <div class="fr">
+    <div class="fg"><label>📄 PDF Letra</label><input id="sl" placeholder="drive.google.com/…"/></div>
+    <div class="fg"><label>🎼 PDF Notas/Acordes</label><input id="sna" placeholder="drive.google.com/…"/></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label>🔊 Audio MP3</label><input id="sau" placeholder="drive.google.com/…"/></div>
+    <div class="fg"><label>▶️ YouTube</label><input id="syt" placeholder="youtube.com/…"/></div>
+  </div>
+  <div class="mfoot">
+    <button class="btn btn-g" onclick="cm('mo-song')">Cancelar</button>
+    <button class="btn btn-v" onclick="saveSong()">Guardar Canción</button>
+  </div>
+</div></div>
+
+<!-- Modal: Servicio -->
+<div class="overlay" id="mo-svc" onclick="oc(event,'mo-svc')">
+<div class="modal">
+  <span class="mhandle"></span>
+  <div class="mtitle" id="mo-svc-t">Nuevo Servicio</div>
+  <div class="fr">
+    <div class="fg"><label>Nombre *</label><input id="vn" placeholder="Ej: Domingo Mañana"/></div>
+    <div class="fg"><label>Fecha *</label><input id="vd" type="date"/></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label>Hora</label><input id="vh" type="time"/></div>
+    <div class="fg"><label>Tipo</label>
+      <select id="vt">
+        <option value="Dominical">Dominical</option>
+        <option value="Entre semana">Entre semana</option>
+        <option value="Especial">Especial</option>
+        <option value="Conferencia">Conferencia</option>
+      </select>
+    </div>
+  </div>
+  <div class="fg"><label>Tema / Mensaje</label><input id="vth" placeholder="Ej: El poder de la fe"/></div>
+  <div class="fg"><label>Predicador</label><input id="vp" placeholder="Nombre del predicador"/></div>
+  <div class="fg"><label>Notas especiales</label><textarea id="vo" placeholder="Indicaciones para el equipo…"></textarea></div>
+  <div class="sep"></div>
+  <div class="flex between mb8">
+    <span class="bold sm">🎵 Canciones del Servicio</span>
+    <button class="btn btn-o btn-sm" onclick="openPicker()">+ Agregar</button>
+  </div>
+  <div id="svc-songs-list" class="sslist" style="margin-bottom:8px"></div>
+  <div class="mfoot">
+    <button class="btn btn-g" onclick="cm('mo-svc')">Cancelar</button>
+    <button class="btn btn-v" onclick="saveSvc()">Guardar Servicio</button>
+  </div>
+</div></div>
+
+<!-- Modal: Song picker -->
+<div class="overlay" id="mo-pick" onclick="oc(event,'mo-pick')">
+<div class="modal" style="max-width:460px">
+  <span class="mhandle"></span>
+  <div class="mtitle">Seleccionar Canciones</div>
+  <input id="pq" placeholder="🔍 Buscar…" oninput="renderPicker()"/>
+  <div id="plist" class="plist"></div>
+  <div class="mfoot">
+    <button class="btn btn-v" onclick="cm('mo-pick')">Listo ✓</button>
+  </div>
+</div></div>
+
+<!-- Modal: Usuario -->
+<div class="overlay" id="mo-user" onclick="oc(event,'mo-user')">
+<div class="modal" style="max-width:420px">
+  <span class="mhandle"></span>
+  <div class="mtitle" id="mo-user-t">Nuevo Usuario</div>
+  <div class="fg"><label>Usuario * (sin espacios)</label>
+    <input id="uu" placeholder="nombre_usuario" autocapitalize="none"/></div>
+  <div class="fg"><label>Nombre visible</label><input id="un" placeholder="Nombre completo"/></div>
+  <div class="fg"><label>Contraseña *</label><input id="upw" type="password" placeholder="••••••••"/></div>
+  <div class="fg"><label>Rol *</label>
+    <select id="ur">
+      <option value="alabanza">Grupo de Alabanza (solo ver)</option>
+      <option value="lider">Líder de Alabanza (CRUD servicios + canciones)</option>
+      <option value="pastor">Pastor (ver todo, editar servicios)</option>
+      <option value="admin">Administrador (acceso total)</option>
+    </select>
+  </div>
+  <div class="mfoot">
+    <button class="btn btn-g" onclick="cm('mo-user')">Cancelar</button>
+    <button class="btn btn-v" onclick="saveUser()">Guardar Usuario</button>
+  </div>
+</div></div>
+
+<!-- Modal: Ver servicio -->
+<div class="overlay" id="mo-vsvc" onclick="oc(event,'mo-vsvc')">
+<div class="modal">
+  <span class="mhandle"></span>
+  <div id="vsvc-body"></div>
+  <div class="mfoot">
+    <button class="btn btn-g" onclick="cm('mo-vsvc')">Cerrar</button>
+    <button class="btn btn-v" id="vsvc-edit" style="display:none" onclick="editSvcFromView()">✏️ Editar</button>
+  </div>
+</div></div>
+
+<!-- Modal: Ver canción -->
+<div class="overlay" id="mo-vsong" onclick="oc(event,'mo-vsong')">
+<div class="modal">
+  <span class="mhandle"></span>
+  <div id="vsong-body"></div>
+  <div class="mfoot">
+    <button class="btn btn-g" onclick="cm('mo-vsong')">Cerrar</button>
+    <button class="btn btn-v" id="vsong-edit" style="display:none" onclick="editSongFromView()">✏️ Editar</button>
+  </div>
+</div></div>
+
+<!-- Modal: Config -->
+<div class="overlay" id="mo-cfg" onclick="oc(event,'mo-cfg')">
+<div class="modal" style="max-width:520px">
+  <span class="mhandle"></span>
+  <div class="mtitle">⚙️ Conectar Google Sheets</div>
+  <div class="fg"><label>URL del Apps Script *</label>
+    <input id="cfgurl" placeholder="https://script.google.com/macros/s/…/exec"/>
+    <p class="xs muted mt8">Esto lo obtienes al desplegar el Apps Script como "Web app"</p>
+  </div>
+  <div class="mfoot">
+    <button class="btn btn-g" onclick="cm('mo-cfg')">Cancelar</button>
+    <button class="btn btn-v" onclick="saveConfig()">Conectar y Sincronizar</button>
+  </div>
+</div></div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════
+     APP LOGIC
+═══════════════════════════════════════════════ -->
+<script>
+'use strict';
+// ── LOCAL STORAGE HELPERS ────────────────────────
+const S={
+  g:k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}},
+  s:(k,v)=>localStorage.setItem(k,JSON.stringify(v)),
+  r:k=>localStorage.removeItem(k)
+};
+
+// ── STATE ────────────────────────────────────────
+let SCRIPT = S.g('script_url')||'';
+let DB = {
+  users:    S.g('db_users')||[],
+  songs:    S.g('db_songs')||[],
+  services: S.g('db_services')||[]
+};
+let CU=null, PAGE='home';
+let EID={};           // editing id per resource
+let SVC_SONGS=[];     // songs array for service modal
+let VIEW_ID={};       // id being viewed
+let CAL_DATE=new Date(); // calendar month
+
+// ── INIT ─────────────────────────────────────────
+function init(){
+  // Default admin
+  if(!DB.users.length){
+    DB.users=[{id:uid(),username:'admin',name:'Administrador',password:btoa('admin123'),role:'admin'}];
+    S.s('db_users',DB.users);
+  }
+  if('serviceWorker'in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  window.addEventListener('online', ()=>{showNet(true); if(SCRIPT)syncAll();});
+  window.addEventListener('offline',()=>showNet(false));
+
+  const saved=S.g('cu');
+  if(saved){
+    const fresh=DB.users.find(u=>u.id===saved.id);
+    if(fresh){CU=fresh;startApp();return;}
+  }
+}
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+const today=()=>new Date().toISOString().slice(0,10);
+
+// ── NETWORK ──────────────────────────────────────
+function showNet(online){
+  const b=document.getElementById('netbar');
+  b.textContent=online?'✓ Conexión restaurada — sincronizando…':'⚠ Sin conexión · Trabajando en modo local';
+  b.className=`on ${online?'go':'off'}`;
+  clearTimeout(b._t); b._t=setTimeout(()=>b.className='',3200);
+}
+
+// ── AUTH ─────────────────────────────────────────
+function doLogin(){
+  const u=document.getElementById('lu').value.trim().toLowerCase();
+  const p=document.getElementById('lp').value;
+  DB.users=S.g('db_users')||DB.users;
+  const user=DB.users.find(x=>x.username===u&&x.password===btoa(p));
+  const err=document.getElementById('le');
+  if(!user){err.textContent='Usuario o contraseña incorrectos';err.style.display='block';return;}
+  err.style.display='none';
+  CU=user; S.s('cu',user);
+  startApp();
+}
+function doLogout(){
+  CU=null;S.r('cu');
+  document.getElementById('appWrap').style.display='none';
+  document.getElementById('loginWrap').style.display='flex';
+}
+
+// ── PERMISSIONS ──────────────────────────────────
+const PERMS={
+  admin:   {songs:'crud',services:'crud',users:'crud'},
+  lider:   {songs:'crud',services:'crud',users:''},
+  pastor:  {songs:'r',  services:'ru',  users:''},
+  alabanza:{songs:'r',  services:'r',   users:''}
+};
+function can(res,act){
+  const p=(PERMS[CU?.role]||{})[res]||'';
+  if(act==='r')return p.includes('r')||p==='crud';
+  if(act==='c')return p.includes('c');
+  if(act==='u')return p.includes('u')||p==='crud';
+  if(act==='d')return p.includes('d')||p==='crud';
+  return false;
+}
+
+// ── APP START ────────────────────────────────────
+function startApp(){
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('appWrap').style.display='flex';
+  const rmap={admin:'Admin',lider:'Líder',pastor:'Pastor',alabanza:'Alabanza'};
+  const rb=document.getElementById('topRole');
+  rb.textContent=rmap[CU.role]||CU.role;
+  rb.className=`rtag r-${CU.role}`;
+  buildNav(); goTo('home');
+  setSyncUI();
+  if(SCRIPT&&navigator.onLine)syncAll();
+}
+
+function buildNav(){
+  const items=[
+    {id:'home',     ico:'🏠', lbl:'Inicio'},
+    {id:'calendar', ico:'📅', lbl:'Calendario'},
+    {id:'services', ico:'📋', lbl:'Servicios'},
+    {id:'songs',    ico:'🎵', lbl:'Canciones'},
+  ];
+  if(CU.role==='admin'||CU.role==='lider')
+    items.push({id:'users',ico:'👥',lbl:'Usuarios'});
+  if(CU.role==='admin')
+    items.push({id:'config',ico:'⚙️',lbl:'Config'});
+  document.getElementById('bnav').innerHTML=items.map(i=>
+    `<button class="bnav-btn" data-id="${i.id}" onclick="goTo('${i.id}')">
+      <span class="ico">${i.ico}</span><span>${i.lbl}</span>
+    </button>`
+  ).join('');
+}
+
+function goTo(id){
+  PAGE=id;
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.toggle('on',b.dataset.id===id));
+  const el=document.getElementById('pg-'+id);
+  if(el){el.classList.add('on');renderPage(id);}
+  document.getElementById('scroller').scrollTop=0;
+}
+function renderPage(id){
+  const el=document.getElementById('pg-'+id); if(!el)return;
+  const map={home:rHome,calendar:rCalendar,services:rServices,songs:rSongs,users:rUsers,config:rConfig};
+  if(map[id]) el.innerHTML=map[id]();
+  if(id==='songs')    setTimeout(filterSongs,30);
+  if(id==='services') setTimeout(filterSvcs,30);
+}
+
+// ── SYNC ─────────────────────────────────────────
+let syncing=false;
+async function syncAll(){
+  if(!SCRIPT||syncing)return;
+  syncing=true; setSyncUI('syncing');
+  try{
+    const r=await fetch(SCRIPT+'?action=getAll',{cache:'no-cache'});
+    const d=await r.json();
+    ['users','songs','services'].forEach(t=>{
+      if(d[t]&&d[t].length){DB[t]=d[t];S.s('db_'+t,d[t]);}
+    });
+    setSyncUI('live'); renderPage(PAGE); toast('Datos actualizados ✓','ok');
+  }catch(e){setSyncUI('dead');}
+  syncing=false;
+}
+async function pushTable(t){
+  if(!SCRIPT)return;
+  try{
+    await fetch(SCRIPT,{method:'POST',mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'sync',table:t,data:DB[t]})});
+  }catch(e){}
+}
+function saveDB(t){S.s('db_'+t,DB[t]); if(SCRIPT&&navigator.onLine)pushTable(t);}
+function setSyncUI(state){
+  const dot=document.getElementById('sdot');
+  const lbl=document.getElementById('slbl');
+  if(!dot)return;
+  if(!SCRIPT){dot.className='sdot dead';lbl.textContent='Local';return;}
+  if(state==='live'){dot.className='sdot live';lbl.textContent='Sync';}
+  else if(state==='syncing'){dot.className='sdot live';lbl.textContent='Sync…';}
+  else{dot.className='sdot dead';lbl.textContent='Sin sync';}
+}
+
+// ── HOME ─────────────────────────────────────────
+function rHome(){
+  const nxt=[...DB.services].filter(s=>s.date>=today())
+    .sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
+  const rec=[...DB.songs].reverse().slice(0,4);
+  const warn=!SCRIPT&&CU.role==='admin'?`
+    <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);
+      border-radius:11px;padding:13px 14px;margin-bottom:14px;display:flex;gap:10px">
+      <span style="font-size:17px">⚠️</span>
+      <div>
+        <p class="bold sm" style="color:var(--amber)">Modo local — sin sincronización</p>
+        <p class="xs muted mt8">Los datos solo están en este dispositivo. Configura Google Apps Script para que todo el equipo acceda desde cualquier lugar.</p>
+        <button class="btn btn-a btn-sm mt8" onclick="goTo('config')">→ Configurar ahora</button>
+      </div>
+    </div>`:
+    (SCRIPT?`<div style="background:rgba(45,212,191,.07);border:1px solid rgba(45,212,191,.2);
+      border-radius:11px;padding:10px 14px;margin-bottom:14px;display:flex;gap:8px;align-items:center">
+      <span>✅</span><p class="xs" style="color:var(--teal)">Sincronizado con Google Sheets — datos compartidos con todo el equipo</p>
+    </div>`:'');
+
+  return`<div class="cw">
+    ${warn}
+    <div class="sg">
+      <div class="sbox"><div class="snum">${DB.services.length}</div><div class="slbl">Servicios</div></div>
+      <div class="sbox"><div class="snum">${DB.songs.length}</div><div class="slbl">Canciones</div></div>
+      <div class="sbox"><div class="snum">${DB.users.length}</div><div class="slbl">Usuarios</div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">📅 Próximos Servicios</div>
+        <button class="btn btn-g btn-sm" onclick="goTo('services')">Ver todos</button></div>
+      ${nxt.length?`<div class="svc-grid">${nxt.map(s=>svcCard(s)).join('')}</div>`
+        :`<div class="empty"><span class="e">📅</span><p>No hay servicios próximos</p></div>`}
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">🎵 Canciones Recientes</div>
+        <button class="btn btn-g btn-sm" onclick="goTo('songs')">Ver todas</button></div>
+      ${rec.length?rec.map(s=>`
+        <div class="ssi" style="cursor:pointer;margin-bottom:5px" onclick="viewSong('${s.id}')">
+          <div style="flex:1"><div class="bold sm">${esc(s.name)}</div>
+            <div class="xs muted">${esc(s.artist||'')}${s.key?` · <b style="color:var(--v2)">${esc(s.key)}</b>`:''}</div>
+          </div>
+          <div class="pills">${songPills(s)}</div>
+        </div>`).join('')
+        :`<div class="empty"><span class="e">🎵</span><p>Sin canciones aún</p></div>`}
+    </div>
+  </div>`;
+}
+
+// ── CALENDAR ─────────────────────────────────────
+function rCalendar(){
+  return`<div class="cw">
+    <div class="card">
+      <div id="cal-render"></div>
+    </div>
+    <div id="cal-day-events"></div>
+    ${can('services','c')?`<div style="margin-top:12px;text-align:right">
+      <button class="btn btn-v btn-sm" onclick="openNewSvc()">+ Nuevo Servicio</button>
+    </div>`:''}
+  </div>`;
+  // render after DOM
+  setTimeout(drawCal,0);
+}
+// Override: after innerHTML set we need to draw
+function afterCalRender(){
+  const el=document.getElementById('cal-render'); if(!el)return;
+  drawCal();
+}
+
+function drawCal(){
+  const el=document.getElementById('cal-render'); if(!el)return;
+  const y=CAL_DATE.getFullYear(), m=CAL_DATE.getMonth();
+  const monthName=['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][m];
+
+  const first=new Date(y,m,1).getDay(); // 0=Sun
+  const days=new Date(y,m+1,0).getDate();
+  const todayStr=today();
+
+  // Map events to days
+  const evMap={};
+  DB.services.forEach(s=>{
+    if(!s.date)return;
+    const ds=s.date.slice(0,7);
+    if(ds===`${y}-${String(m+1).padStart(2,'0')}`){
+      const d=parseInt(s.date.slice(8,10));
+      if(!evMap[d])evMap[d]=[];
+      evMap[d].push(s);
+    }
+  });
+
+  const typeColor={
+    'Dominical':'ev-domingo','Entre semana':'ev-semana',
+    'Especial':'ev-especial','Conferencia':'ev-conf'
+  };
+
+  let cells='';
+  // Empty cells before first day
+  for(let i=0;i<first;i++) cells+=`<div class="cal-day other-month"></div>`;
+  for(let d=1;d<=days;d++){
+    const dateStr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=dateStr===todayStr;
+    const evs=evMap[d]||[];
+    const dots=evs.map(e=>`<div class="cal-dot ${typeColor[e.type]||'ev-domingo'}"></div>`).join('');
+    cells+=`<div class="cal-day${isToday?' today':''}${evs.length?' has-ev':''}" onclick="showDayEvents('${dateStr}')">
+      <div class="cal-dn">${d}</div>
+      ${dots?`<div class="cal-dots">${dots}</div>`:''}
+    </div>`;
+  }
+
+  el.innerHTML=`
+    <div class="cal-nav">
+      <button class="btn btn-g btn-sm" onclick="calMove(-1)">‹</button>
+      <div class="cal-month">${monthName} ${y}</div>
+      <button class="btn btn-g btn-sm" onclick="calMove(1)">›</button>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-dow">Dom</div><div class="cal-dow">Lun</div>
+      <div class="cal-dow">Mar</div><div class="cal-dow">Mié</div>
+      <div class="cal-dow">Jue</div><div class="cal-dow">Vie</div>
+      <div class="cal-dow">Sáb</div>
+      ${cells}
+    </div>
+    <div class="ev-legend">
+      <div class="ev-leg-item"><div class="ev-leg-dot ev-domingo"></div>Dominical</div>
+      <div class="ev-leg-item"><div class="ev-leg-dot ev-semana"></div>Entre semana</div>
+      <div class="ev-leg-item"><div class="ev-leg-dot ev-especial"></div>Especial</div>
+      <div class="ev-leg-item"><div class="ev-leg-dot ev-conf"></div>Conferencia</div>
+    </div>`;
+}
+
+function calMove(dir){
+  CAL_DATE=new Date(CAL_DATE.getFullYear(), CAL_DATE.getMonth()+dir, 1);
+  drawCal();
+  document.getElementById('cal-day-events').innerHTML='';
+}
+
+function showDayEvents(dateStr){
+  const evs=DB.services.filter(s=>s.date===dateStr);
+  const el=document.getElementById('cal-day-events'); if(!el)return;
+  if(!evs.length){el.innerHTML='';return;}
+  const fmt=fmtDate(dateStr);
+  el.innerHTML=`<div class="day-events">
+    <div class="day-ev-title">📅 ${fmt}</div>
+    <div class="svc-grid">${evs.map(s=>svcCard(s)).join('')}</div>
+  </div>`;
+}
+
+// ── SERVICES ─────────────────────────────────────
+let svcFilter='', svcTypeFilter='';
+function rServices(){
+  return`<div class="cw">
+    <div class="card">
+      <div class="ch">
+        <div class="ct">📋 Servicios</div>
+        ${can('services','c')?`<button class="btn btn-v btn-sm" onclick="openNewSvc()">+ Nuevo</button>`:''}
+      </div>
+      <div class="srow">
+        <input id="svq" placeholder="🔍 Buscar…" oninput="filterSvcs()"/>
+        <select id="svt" onchange="filterSvcs()">
+          <option value="">Todos los tipos</option>
+          <option>Dominical</option><option>Entre semana</option>
+          <option>Especial</option><option>Conferencia</option>
+        </select>
+      </div>
+      <div id="svc-list"></div>
+    </div>
+  </div>`;
+}
+function filterSvcs(){
+  const q=(document.getElementById('svq')?.value||'').toLowerCase();
+  const t=document.getElementById('svt')?.value||'';
+  let list=[...DB.services].sort((a,b)=>b.date.localeCompare(a.date));
+  if(q)list=list.filter(s=>s.name.toLowerCase().includes(q)||(s.theme||'').toLowerCase().includes(q)||(s.preacher||'').toLowerCase().includes(q));
+  if(t)list=list.filter(s=>s.type===t);
+  const el=document.getElementById('svc-list'); if(!el)return;
+  if(!list.length){el.innerHTML=`<div class="empty"><span class="e">📋</span><p>Sin resultados</p></div>`;return;}
+  el.innerHTML=`<div class="svc-grid">${list.map(s=>svcCard(s)).join('')}</div>`;
+}
+function svcCard(s){
+  const typeCls={Dominical:'tag-v','Entre semana':'tag-g',Especial:'tag-a',Conferencia:'tag-r'};
+  return`<div class="svc-card" onclick="viewSvc('${s.id}')">
+    <div class="svc-date">${fmtDate(s.date)}${s.time?` · ${s.time}`:''}</div>
+    <div class="svc-name">${esc(s.name)}</div>
+    <div class="svc-meta">
+      <span class="tag ${typeCls[s.type]||'tag-v'}">${s.type||'Dominical'}</span>
+      <span class="tag tag-v">🎵 ${(s.songs||[]).length}</span>
+      ${s.preacher?`<span class="xs muted">🎤 ${esc(s.preacher)}</span>`:''}
+    </div>
+  </div>`;
+}
+function openNewSvc(){
+  EID.svc=null; SVC_SONGS=[];
+  document.getElementById('mo-svc-t').textContent='Nuevo Servicio';
+  ['vn','vd','vh','vth','vp','vo'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('vt').value='Dominical';
+  renderSvcSongs(); om('mo-svc');
+}
+function editSvc(id){
+  const s=DB.services.find(x=>x.id===id); if(!s)return;
+  EID.svc=id; SVC_SONGS=[...(s.songs||[])];
+  document.getElementById('mo-svc-t').textContent='Editar Servicio';
+  document.getElementById('vn').value=s.name||'';
+  document.getElementById('vd').value=s.date||'';
+  document.getElementById('vh').value=s.time||'';
+  document.getElementById('vt').value=s.type||'Dominical';
+  document.getElementById('vth').value=s.theme||'';
+  document.getElementById('vp').value=s.preacher||'';
+  document.getElementById('vo').value=s.notes||'';
+  renderSvcSongs(); om('mo-svc');
+}
+function saveSvc(){
+  const name=document.getElementById('vn').value.trim();
+  const date=document.getElementById('vd').value;
+  if(!name||!date){toast('Nombre y fecha son obligatorios','er');return;}
+  const obj={
+    id:EID.svc||uid(), name, date,
+    time: document.getElementById('vh').value,
+    type: document.getElementById('vt').value,
+    theme:document.getElementById('vth').value.trim(),
+    preacher:document.getElementById('vp').value.trim(),
+    notes:document.getElementById('vo').value.trim(),
+    songs:[...SVC_SONGS],
+    updatedAt:new Date().toISOString()
+  };
+  if(EID.svc){const i=DB.services.findIndex(x=>x.id===EID.svc);DB.services[i]=obj;}
+  else DB.services.push(obj);
+  saveDB('services'); cm('mo-svc'); toast('Servicio guardado ✓','ok'); renderPage(PAGE);
+}
+function deleteSvc(id){
+  if(!confirm('¿Eliminar este servicio?'))return;
+  DB.services=DB.services.filter(x=>x.id!==id);
+  saveDB('services'); toast('Eliminado',''); cm('mo-vsvc'); renderPage(PAGE);
+}
+function viewSvc(id){
+  const s=DB.services.find(x=>x.id===id); if(!s)return;
+  VIEW_ID.svc=id;
+  const typeCls={Dominical:'tag-v','Entre semana':'tag-g',Especial:'tag-a',Conferencia:'tag-r'};
+  const songRows=(s.songs||[]).map((sid,i)=>{
+    const sg=DB.songs.find(x=>x.id===sid); if(!sg)return'';
+    return`<div class="ssi">
+      <div class="ss-num">${i+1}</div>
+      <div style="flex:1">
+        <div class="bold sm">${esc(sg.name)}</div>
+        <div class="xs muted">${esc(sg.artist||'')}${sg.key?` · <b style="color:var(--v2)">${esc(sg.key)}</b>`:''}</div>
+      </div>
+      <div class="pills">${songPills(sg)}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('vsvc-body').innerHTML=`
+    <div class="xs muted mb8">${fmtDate(s.date)}${s.time?` · ${s.time}`:''} · <span class="tag ${typeCls[s.type]||'tag-v'}">${s.type}</span></div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--v3);margin-bottom:6px">${esc(s.name)}</div>
+    ${s.theme?`<p class="sm muted">📖 ${esc(s.theme)}</p>`:''}
+    ${s.preacher?`<p class="sm muted">🎤 ${esc(s.preacher)}</p>`:''}
+    ${s.notes?`<p class="xs muted mt8" style="font-style:italic">${esc(s.notes)}</p>`:''}
+    <div class="sep"></div>
+    <p class="bold sm mb8">🎵 Lista de Canciones</p>
+    <div class="sslist">${songRows||'<p class="xs muted">Sin canciones asignadas</p>'}</div>`;
+  const eb=document.getElementById('vsvc-edit');
+  eb.style.display=can('services','u')?'':'none';
+  om('mo-vsvc');
+}
+function editSvcFromView(){cm('mo-vsvc');editSvc(VIEW_ID.svc);}
+
+// ── SONG PICKER ───────────────────────────────────
+function openPicker(){
+  document.getElementById('pq').value='';
+  renderPicker(); om('mo-pick');
+}
+function renderPicker(){
+  const q=document.getElementById('pq').value.toLowerCase();
+  let list=DB.songs;
+  if(q)list=list.filter(s=>s.name.toLowerCase().includes(q)||(s.artist||'').toLowerCase().includes(q));
+  const el=document.getElementById('plist'); if(!el)return;
+  if(!list.length){el.innerHTML='<p class="xs muted" style="padding:10px">Sin canciones</p>';return;}
+  el.innerHTML=list.map(s=>`
+    <div class="pitem${SVC_SONGS.includes(s.id)?' sel':''}" onclick="togSong('${s.id}')">
+      <div>
+        <div class="bold sm">${esc(s.name)}</div>
+        <div class="xs muted">${esc(s.artist||'')}${s.key?` · ${s.key}`:''}</div>
+      </div>
+      <span style="font-size:18px">${SVC_SONGS.includes(s.id)?'✅':'➕'}</span>
+    </div>`).join('');
+}
+function togSong(id){
+  const i=SVC_SONGS.indexOf(id);
+  i>=0?SVC_SONGS.splice(i,1):SVC_SONGS.push(id);
+  renderPicker(); renderSvcSongs();
+}
+function renderSvcSongs(){
+  const el=document.getElementById('svc-songs-list'); if(!el)return;
+  if(!SVC_SONGS.length){el.innerHTML='<p class="xs muted">Sin canciones aún</p>';return;}
+  el.innerHTML=SVC_SONGS.map((sid,i)=>{
+    const s=DB.songs.find(x=>x.id===sid); if(!s)return'';
+    return`<div class="ssi">
+      <div class="ss-num">${i+1}</div>
+      <div style="flex:1">
+        <div class="bold sm">${esc(s.name)}</div>
+        <div class="xs muted">${esc(s.artist||'')}${s.key?` · ${s.key}`:''}</div>
+      </div>
+      <button class="btn btn-r btn-xs" onclick="SVC_SONGS.splice(${i},1);renderSvcSongs()">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ── SONGS ─────────────────────────────────────────
+function rSongs(){
+  const allTags=[...new Set(DB.songs.flatMap(s=>(s.tags||'').split(',').map(t=>t.trim()).filter(Boolean)))];
+  return`<div class="cw">
+    <div class="card">
+      <div class="ch">
+        <div class="ct">🎵 Canciones</div>
+        ${can('songs','c')?`<button class="btn btn-v btn-sm" onclick="openNewSong()">+ Nueva</button>`:''}
+      </div>
+      <div class="srow">
+        <input id="sq" placeholder="🔍 Nombre, artista, tono…" oninput="filterSongs()"/>
+        <select id="stag" onchange="filterSongs()">
+          <option value="">Todas</option>
+          ${allTags.map(t=>`<option value="${t}">${t}</option>`).join('')}
+        </select>
+      </div>
+      <div id="song-grid" class="song-grid"></div>
+    </div>
+  </div>`;
+}
+function filterSongs(){
+  const q=(document.getElementById('sq')?.value||'').toLowerCase();
+  const tag=(document.getElementById('stag')?.value||'').toLowerCase();
+  let list=DB.songs;
+  if(q)list=list.filter(s=>s.name.toLowerCase().includes(q)||(s.artist||'').toLowerCase().includes(q)||(s.key||'').toLowerCase().includes(q));
+  if(tag)list=list.filter(s=>(s.tags||'').toLowerCase().includes(tag));
+  renderSongGrid(list);
+}
+function renderSongGrid(list){
+  const el=document.getElementById('song-grid'); if(!el)return;
+  if(!list.length){el.innerHTML=`<div class="empty" style="grid-column:1/-1"><span class="e">🎵</span><p>Sin canciones</p></div>`;return;}
+  el.innerHTML=list.map(s=>`
+    <div class="song-card">
+      <h3>${esc(s.name)}</h3>
+      <div class="sub">${esc(s.artist||'Sin artista')}${s.key?` · <b style="color:var(--v2)">${esc(s.key)}</b>`:''}</div>
+      ${s.tags?`<div class="pills">${s.tags.split(',').map(t=>`<span class="tag tag-v" style="font-size:10px">${esc(t.trim())}</span>`).join('')}</div>`:''}
+      <div class="pills">${songPills(s)}</div>
+      <div class="song-actions">
+        <button class="btn btn-g btn-xs" onclick="viewSong('${s.id}')">👁 Ver</button>
+        ${can('songs','u')?`<button class="btn btn-o btn-xs" onclick="editSong('${s.id}')">✏️ Editar</button>`:''}
+        ${can('songs','d')?`<button class="btn btn-r btn-xs" onclick="deleteSong('${s.id}')">🗑</button>`:''}
+      </div>
+    </div>`).join('');
+}
+function songPills(s){
+  return[
+    s.pdfLetra?`<a class="pill p-pdf" href="${s.pdfLetra}" target="_blank" onclick="e=>e.stopPropagation()">📄 Letra</a>`:'',
+    s.pdfNotas?`<a class="pill p-note" href="${s.pdfNotas}" target="_blank">🎼 Notas</a>`:'',
+    s.audio   ?`<a class="pill p-mp3" href="${s.audio}"    target="_blank">🔊 Audio</a>`:'',
+    s.youtube ?`<a class="pill p-yt"  href="${s.youtube}"  target="_blank">▶️ YT</a>`:'',
+  ].join('');
+}
+function openNewSong(){
+  EID.song=null;
+  document.getElementById('mo-song-t').textContent='Nueva Canción';
+  ['sn','sa','sk','sb','st','sno','sl','sna','sau','syt'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  om('mo-song');
+}
+function editSong(id){
+  const s=DB.songs.find(x=>x.id===id); if(!s)return;
+  EID.song=id;
+  document.getElementById('mo-song-t').textContent='Editar Canción';
+  document.getElementById('sn').value=s.name||'';
+  document.getElementById('sa').value=s.artist||'';
+  document.getElementById('sk').value=s.key||'';
+  document.getElementById('sb').value=s.bpm||'';
+  document.getElementById('st').value=s.tags||'';
+  document.getElementById('sno').value=s.notes||'';
+  document.getElementById('sl').value=s.pdfLetra||'';
+  document.getElementById('sna').value=s.pdfNotas||'';
+  document.getElementById('sau').value=s.audio||'';
+  document.getElementById('syt').value=s.youtube||'';
+  om('mo-song');
+}
+function saveSong(){
+  const name=document.getElementById('sn').value.trim();
+  if(!name){toast('El nombre es obligatorio','er');return;}
+  const obj={
+    id:EID.song||uid(),name,
+    artist:document.getElementById('sa').value.trim(),
+    key:document.getElementById('sk').value.trim(),
+    bpm:document.getElementById('sb').value.trim(),
+    tags:document.getElementById('st').value.trim(),
+    notes:document.getElementById('sno').value.trim(),
+    pdfLetra:document.getElementById('sl').value.trim(),
+    pdfNotas:document.getElementById('sna').value.trim(),
+    audio:document.getElementById('sau').value.trim(),
+    youtube:document.getElementById('syt').value.trim(),
+    updatedAt:new Date().toISOString()
+  };
+  if(EID.song){const i=DB.songs.findIndex(x=>x.id===EID.song);DB.songs[i]=obj;}
+  else DB.songs.push(obj);
+  saveDB('songs'); cm('mo-song'); toast('Canción guardada ✓','ok'); renderPage(PAGE);
+}
+function deleteSong(id){
+  if(!confirm('¿Eliminar esta canción?'))return;
+  DB.songs=DB.songs.filter(x=>x.id!==id);
+  saveDB('songs'); toast('Eliminada',''); renderPage(PAGE);
+}
+function viewSong(id){
+  const s=DB.songs.find(x=>x.id===id); if(!s)return;
+  VIEW_ID.song=id;
+  document.getElementById('vsong-body').innerHTML=`
+    <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--v3);margin-bottom:4px">${esc(s.name)}</div>
+    <p class="sm muted mb8">${esc(s.artist||'Sin artista')}${s.key?` · <b style="color:var(--v2)">${esc(s.key)}</b>`:''} ${s.bpm?`· ${s.bpm} BPM`:''}</p>
+    ${s.tags?`<div class="pills mb8">${s.tags.split(',').map(t=>`<span class="tag tag-v">${esc(t.trim())}</span>`).join('')}</div>`:''}
+    ${s.notes?`<p class="xs muted mt8" style="font-style:italic">${esc(s.notes)}</p>`:''}
+    <div class="sep"></div>
+    <p class="bold sm mb8">Archivos</p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${s.pdfLetra?`<a class="btn btn-o" href="${s.pdfLetra}" target="_blank">📄 Abrir PDF con Letra</a>`:''}
+      ${s.pdfNotas?`<a class="btn btn-o" href="${s.pdfNotas}" target="_blank">🎼 Abrir PDF de Notas/Acordes</a>`:''}
+      ${s.audio   ?`<a class="btn btn-t" href="${s.audio}"    target="_blank">🔊 Escuchar Audio</a>`:''}
+      ${s.youtube ?`<a class="btn btn-r" href="${s.youtube}"  target="_blank">▶️ Ver en YouTube</a>`:''}
+      ${!s.pdfLetra&&!s.pdfNotas&&!s.audio&&!s.youtube?`<p class="xs muted">Sin archivos cargados</p>`:''}
+    </div>`;
+  document.getElementById('vsong-edit').style.display=can('songs','u')?'':'none';
+  om('mo-vsong');
+}
+function editSongFromView(){cm('mo-vsong');editSong(VIEW_ID.song);}
+
+// ── USERS (admin + lider can see, only admin edits) ──
+function rUsers(){
+  const canEdit=CU.role==='admin';
+  return`<div class="cw">
+    <div class="card">
+      <div class="ch">
+        <div class="ct">👥 Usuarios</div>
+        ${canEdit?`<button class="btn btn-v btn-sm" onclick="openNewUser()">+ Nuevo</button>`:''}
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>Usuario</th><th>Nombre</th><th>Rol</th>${canEdit?'<th>Acciones</th>':''}</tr></thead>
+        <tbody>
+        ${DB.users.map(u=>`<tr>
+          <td><span class="code">${esc(u.username)}</span></td>
+          <td>${esc(u.name||'—')}</td>
+          <td><span class="rtag r-${u.role}">${{admin:'Admin',lider:'Líder',pastor:'Pastor',alabanza:'Alabanza'}[u.role]||u.role}</span></td>
+          ${canEdit?`<td style="white-space:nowrap">
+            ${u.id!==CU.id?`
+              <button class="btn btn-o btn-xs" onclick="editUser('${u.id}')" style="margin-right:4px">✏️</button>
+              <button class="btn btn-r btn-xs" onclick="deleteUser('${u.id}')">🗑</button>
+            `:'<span class="xs muted">(tú)</span>'}
+          </td>`:''}
+        </tr>`).join('')}
+        </tbody>
+      </table></div>
+    </div>
+  </div>`;
+}
+function openNewUser(){
+  EID.user=null;
+  document.getElementById('mo-user-t').textContent='Nuevo Usuario';
+  ['uu','un','upw'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ur').value='alabanza';
+  om('mo-user');
+}
+function editUser(id){
+  const u=DB.users.find(x=>x.id===id); if(!u)return;
+  EID.user=id;
+  document.getElementById('mo-user-t').textContent='Editar Usuario';
+  document.getElementById('uu').value=u.username;
+  document.getElementById('un').value=u.name||'';
+  document.getElementById('upw').value='';
+  document.getElementById('ur').value=u.role;
+  om('mo-user');
+}
+function saveUser(){
+  const username=document.getElementById('uu').value.trim().toLowerCase().replace(/\s+/g,'_');
+  const name=document.getElementById('un').value.trim();
+  const pw=document.getElementById('upw').value;
+  const role=document.getElementById('ur').value;
+  if(!username){toast('El usuario es obligatorio','er');return;}
+  if(!EID.user&&!pw){toast('La contraseña es obligatoria','er');return;}
+  const dup=DB.users.find(u=>u.username===username&&u.id!==EID.user);
+  if(dup){toast('Ese usuario ya existe','er');return;}
+  if(EID.user){
+    const i=DB.users.findIndex(x=>x.id===EID.user);
+    DB.users[i]={...DB.users[i],username,name,role,...(pw?{password:btoa(pw)}:{})};
+  }else{
+    DB.users.push({id:uid(),username,name,password:btoa(pw),role});
+  }
+  saveDB('users'); cm('mo-user'); toast('Usuario guardado ✓','ok'); renderPage(PAGE);
+}
+function deleteUser(id){
+  if(!confirm('¿Eliminar este usuario?'))return;
+  DB.users=DB.users.filter(x=>x.id!==id);
+  saveDB('users'); toast('Eliminado',''); renderPage(PAGE);
+}
+
+// ── CONFIG ────────────────────────────────────────
+function rConfig(){
+  return`<div class="cw">
+    <div class="card">
+      <div class="ch"><div class="ct">⚙️ Configuración</div></div>
+      <div class="flex gap8 mb12">
+        <span class="sdot ${SCRIPT?'live':'dead'}"></span>
+        <span class="sm ${SCRIPT?'':'muted'}">${SCRIPT?'Conectado a Google Sheets':'Sin conexión a Sheets'}</span>
+        ${SCRIPT?`<button class="btn btn-t btn-xs" onclick="syncAll()">↺ Sincronizar ahora</button>`:''}
+      </div>
+      ${SCRIPT?`<p class="xs muted mb12">URL: <span class="code" style="word-break:break-all">${SCRIPT}</span></p>`:''}
+      <button class="btn btn-v btn-sm" onclick="om('mo-cfg');document.getElementById('cfgurl').value='${SCRIPT}'">${SCRIPT?'Cambiar URL':'Conectar Google Sheets'}</button>
+    </div>
+    <div class="card">
+      <div class="ct mb12">📋 Guía de Configuración Paso a Paso</div>
+      <div class="cfg-step">
+        <h3>Paso 1 — Crear Google Sheets</h3>
+        <ol>
+          <li>Ve a <a href="https://sheets.google.com" target="_blank" style="color:var(--v2)">sheets.google.com</a> y crea una hoja nueva</li>
+          <li>Nómbrala como quieras (ej: "Alabanza App")</li>
+          <li>Crea 3 pestañas llamadas exactamente: <span class="code">users</span> <span class="code">songs</span> <span class="code">services</span></li>
+        </ol>
+      </div>
+      <div class="cfg-step">
+        <h3>Paso 2 — Apps Script</h3>
+        <ol>
+          <li>En tu Sheets: menú <b>Extensiones → Apps Script</b></li>
+          <li>Borra el código que hay y pega este:</li>
+        </ol>
+        <pre id="as-code">${getASCode()}</pre>
+        <button class="btn btn-o btn-sm mt8" onclick="copyAS()">📋 Copiar código</button>
+      </div>
+      <div class="cfg-step">
+        <h3>Paso 3 — Publicar como Web App</h3>
+        <ol>
+          <li>Clic en <b>Implementar → Nueva implementación</b></li>
+          <li>Tipo: <b>Aplicación web</b></li>
+          <li>Ejecutar como: <b>Yo (tu cuenta)</b></li>
+          <li>Quién tiene acceso: <b>Cualquier usuario</b></li>
+          <li>Clic <b>Implementar</b> y <b>autoriza</b> los permisos</li>
+          <li>Copia la URL que termina en <span class="code">/exec</span></li>
+        </ol>
+      </div>
+      <div class="cfg-step">
+        <h3>Paso 4 — Conectar la App</h3>
+        <ol>
+          <li>Pega la URL copiada en el botón de arriba "Conectar Google Sheets"</li>
+          <li>La app sincronizará los datos automáticamente cada vez que haya internet</li>
+          <li>¡Listo! Cualquier usuario que entre verá los datos actualizados</li>
+        </ol>
+      </div>
+      <div class="cfg-step">
+        <h3>Paso 5 — Publicar la App (GitHub Pages)</h3>
+        <ol>
+          <li>Ve a <a href="https://github.com" target="_blank" style="color:var(--v2)">github.com</a> y crea una cuenta gratuita</li>
+          <li>Crea un repositorio nuevo, nómbralo <span class="code">alabanza-app</span></li>
+          <li>Sube los archivos: <span class="code">index.html</span> <span class="code">manifest.json</span> <span class="code">sw.js</span> <span class="code">icon-192.png</span> <span class="code">icon-512.png</span></li>
+          <li>Ve a Settings → Pages → Branch: main → Save</li>
+          <li>Tu URL será: <span class="code">tuusuario.github.io/alabanza-app</span></li>
+          <li>¡Comparte ese link con tu equipo!</li>
+        </ol>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct mb8">📱 Instalar como App</div>
+      <p class="xs muted">
+        <b>Android (Chrome):</b> abre el link → menú (⋮) → "Añadir a pantalla de inicio"<br><br>
+        <b>iPhone/iPad (Safari):</b> abre el link → botón compartir (□↑) → "Agregar a pantalla de inicio"<br><br>
+        <b>Computadora (Chrome/Edge):</b> abre el link → ícono de instalar (⊕) en la barra de URL
+      </p>
+    </div>
+  </div>`;
+}
+function getASCode(){
+  return`const SSID = 'PEGA_AQUI_EL_ID_DE_TU_GOOGLE_SHEET';
+// El ID está en la URL: .../spreadsheets/d/ESTE_ES_EL_ID/edit
+
+function doGet(e) {
+  const ss = SpreadsheetApp.openById(SSID);
+  const out = {};
+  ['users','songs','services'].forEach(tab => {
+    const sh = ss.getSheetByName(tab);
+    if (!sh) { out[tab] = []; return; }
+    const rows = sh.getDataRange().getValues();
+    if (rows.length < 2) { out[tab] = []; return; }
+    const keys = rows[0];
+    out[tab] = rows.slice(1).map(r => {
+      const o = {};
+      keys.forEach((k,i) => { o[k] = r[i] !== undefined ? r[i] : ''; });
+      return o;
+    });
+  });
+  return ContentService
+    .createTextOutput(JSON.stringify(out))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  const { action, table, data } = JSON.parse(e.postData.contents);
+  if (action === 'sync') {
+    const ss = SpreadsheetApp.openById(SSID);
+    let sh = ss.getSheetByName(table);
+    if (!sh) sh = ss.insertSheet(table);
+    sh.clearContents();
+    if (!data || !data.length) return ok();
+    const keys = Object.keys(data[0]);
+    sh.appendRow(keys);
+    data.forEach(row => sh.appendRow(keys.map(k => {
+      const v = row[k];
+      return Array.isArray(v) ? JSON.stringify(v) : (v ?? '');
+    })));
+  }
+  return ok();
+}
+
+function ok() {
+  return ContentService
+    .createTextOutput(JSON.stringify({ok:true}))
+    .setMimeType(ContentService.MimeType.JSON);
+}`.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function copyAS(){
+  const raw=getASCode().replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+  navigator.clipboard.writeText(raw).then(()=>toast('Código copiado ✓','ok'));
+}
+function saveConfig(){
+  const url=document.getElementById('cfgurl').value.trim();
+  if(!url){toast('Ingresa la URL','er');return;}
+  SCRIPT=url; S.s('script_url',url);
+  cm('mo-cfg'); setSyncUI('syncing'); toast('Conectando…','');
+  syncAll().then(()=>renderPage(PAGE));
+}
+
+// ── MODAL HELPERS ─────────────────────────────────
+function om(id){document.getElementById(id).classList.add('on')}
+function cm(id){document.getElementById(id).classList.remove('on')}
+function oc(e,id){if(e.target===document.getElementById(id))cm(id)}
+
+// ── TOAST ─────────────────────────────────────────
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`on ${type}`;
+  clearTimeout(t._t); t._t=setTimeout(()=>t.className='',2800);
+}
+
+// ── UTILS ─────────────────────────────────────────
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function fmtDate(d){
+  if(!d)return'—';
+  const[y,m,day]=d.split('-');
+  return`${parseInt(day)} ${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m)-1]} ${y}`;
+}
+
+// ── CALENDAR RE-RENDER HOOK ───────────────────────
+// Override renderPage to hook calendar
+const _rp=renderPage;
+window.renderPage=function(id){
+  _rp(id);
+  if(id==='calendar')setTimeout(afterCalRender,30);
+};
+
+// ── KICK OFF ──────────────────────────────────────
+init();
+</script>
+</body>
+</html>

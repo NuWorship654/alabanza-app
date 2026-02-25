@@ -1,0 +1,17 @@
+{
+  "name": "Alabanza - Sistema de Servicios",
+  "short_name": "Alabanza",
+  "description": "Sistema privado de gestión de servicios y canciones para la iglesia",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#080612",
+  "theme_color": "#080612",
+  "orientation": "any",
+  "lang": "es",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["productivity", "utilities"],
+  "screenshots": []
+}
