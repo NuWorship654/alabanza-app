@@ -662,7 +662,7 @@ let CAL_DATE=new Date(); // calendar month
 function init(){
   // Default admin
   if(!DB.users.length){
-    DB.users=[{id:uid(),username:'admin',name:'Administrador',password:btoa('admin123'),role:'admin'}];
+    DB.users=[{id:uid(),username:'admin',name:'Administrador',password:'admin123',role:'admin'}];
     S.s('db_users',DB.users);
   }
   if('serviceWorker'in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -688,17 +688,21 @@ function showNet(online){
 }
 
 // ── AUTH ─────────────────────────────────────────
+function isB64(s){try{return s&&s.length>3&&btoa(atob(s))===s;}catch(e){return false;}}
+
 function doLogin(){
   const u=document.getElementById('lu').value.trim().toLowerCase();
   const p=document.getElementById('lp').value;
   const err=document.getElementById('le');
-  // Always reload freshest users from localStorage
   const stored=S.g('db_users');
   if(stored&&stored.length) DB.users=stored;
-  // Try password as btoa (normal) and also plain (legacy/sheets import)
   const user=DB.users.find(x=>{
     if(x.username!==u) return false;
-    return x.password===btoa(p) || x.password===p;
+    const pw=x.password||'';
+    if(pw===p) return true;
+    if(pw===btoa(p)) return true;
+    if(isB64(pw)&&atob(pw)===p) return true;
+    return false;
   });
   if(!user){err.textContent='Usuario o contraseña incorrectos';err.style.display='block';return;}
   // Normalize password to btoa if it wasn't
@@ -792,14 +796,7 @@ async function syncAll(){
     if(d.services && d.services.length>0) { DB.services=d.services; S.s('db_services',d.services); }
     // For users: merge carefully - don't wipe local users if sheets returns empty/malformed
     if(d.users && d.users.length>0){
-      // Normalize passwords - sheets might store plain text
-      d.users=d.users.map(u=>{
-        if(u.password && u.password.length<30){
-          // Looks like plain text, encode it
-          u.password=btoa(u.password);
-        }
-        return u;
-      });
+      // Passwords are stored as plain text in Sheets, keep as-is
       DB.users=d.users; S.s('db_users',d.users);
       // Update current session if user data changed
       if(CU){
@@ -1299,8 +1296,7 @@ function togglePw(userId, encoded){
     el.style.color='var(--sub)';
     _pwVisible[userId]=false;
   } else {
-    try{ el.textContent=atob(encoded); }
-    catch(e){ el.textContent=encoded; }
+    el.textContent=isB64(encoded)?atob(encoded):encoded;
     el.style.color='var(--v2)';
     _pwVisible[userId]=true;
   }
@@ -1334,9 +1330,9 @@ function saveUser(){
   if(dup){toast('Ese usuario ya existe','er');return;}
   if(EID.user){
     const i=DB.users.findIndex(x=>x.id===EID.user);
-    DB.users[i]={...DB.users[i],username,name,role,...(pw?{password:btoa(pw)}:{})};
+    DB.users[i]={...DB.users[i],username,name,role,...(pw?{password:pw}:{})};
   }else{
-    DB.users.push({id:uid(),username,name,password:btoa(pw),role});
+    DB.users.push({id:uid(),username,name,password:pw,role});
   }
   saveDB('users'); cm('mo-user'); toast('Usuario guardado ✓','ok'); renderPage(PAGE);
 }
