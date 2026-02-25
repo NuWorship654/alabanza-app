@@ -691,10 +691,21 @@ function showNet(online){
 function doLogin(){
   const u=document.getElementById('lu').value.trim().toLowerCase();
   const p=document.getElementById('lp').value;
-  DB.users=S.g('db_users')||DB.users;
-  const user=DB.users.find(x=>x.username===u&&x.password===btoa(p));
   const err=document.getElementById('le');
+  // Always reload freshest users from localStorage
+  const stored=S.g('db_users');
+  if(stored&&stored.length) DB.users=stored;
+  // Try password as btoa (normal) and also plain (legacy/sheets import)
+  const user=DB.users.find(x=>{
+    if(x.username!==u) return false;
+    return x.password===btoa(p) || x.password===p;
+  });
   if(!user){err.textContent='Usuario o contraseña incorrectos';err.style.display='block';return;}
+  // Normalize password to btoa if it wasn't
+  if(user.password===p && p!==btoa(p)){
+    user.password=btoa(p);
+    S.s('db_users',DB.users);
+  }
   err.style.display='none';
   CU=user; S.s('cu',user);
   startApp();
@@ -776,11 +787,28 @@ async function syncAll(){
   try{
     const r=await fetch(SCRIPT+'?action=getAll',{cache:'no-cache'});
     const d=await r.json();
-    ['users','songs','services'].forEach(t=>{
-      if(d[t]&&d[t].length){DB[t]=d[t];S.s('db_'+t,d[t]);}
-    });
+    // Only update each table if we got real data
+    if(d.songs    && d.songs.length>0)    { DB.songs=d.songs;       S.s('db_songs',d.songs); }
+    if(d.services && d.services.length>0) { DB.services=d.services; S.s('db_services',d.services); }
+    // For users: merge carefully - don't wipe local users if sheets returns empty/malformed
+    if(d.users && d.users.length>0){
+      // Normalize passwords - sheets might store plain text
+      d.users=d.users.map(u=>{
+        if(u.password && u.password.length<30){
+          // Looks like plain text, encode it
+          u.password=btoa(u.password);
+        }
+        return u;
+      });
+      DB.users=d.users; S.s('db_users',d.users);
+      // Update current session if user data changed
+      if(CU){
+        const fresh=DB.users.find(u=>u.id===CU.id);
+        if(fresh){CU=fresh; S.s('cu',fresh);}
+      }
+    }
     setSyncUI('live'); renderPage(PAGE); toast('Datos actualizados ✓','ok');
-  }catch(e){setSyncUI('dead');}
+  }catch(e){setSyncUI('dead'); console.warn('Sync error:',e);}
   syncing=false;
 }
 async function pushTable(t){
@@ -1237,13 +1265,18 @@ function rUsers(){
         ${canEdit?`<button class="btn btn-v btn-sm" onclick="openNewUser()">+ Nuevo</button>`:''}
       </div>
       <div class="tw"><table>
-        <thead><tr><th>Usuario</th><th>Nombre</th><th>Rol</th>${canEdit?'<th>Acciones</th>':''}</tr></thead>
+        <thead><tr><th>Usuario</th><th>Nombre</th><th>Rol</th>${canEdit?'<th>Contraseña</th><th>Acciones</th>':''}</tr></thead>
         <tbody>
         ${DB.users.map(u=>`<tr>
           <td><span class="code">${esc(u.username)}</span></td>
           <td>${esc(u.name||'—')}</td>
           <td><span class="rtag r-${u.role}">${{admin:'Admin',lider:'Líder',pastor:'Pastor',alabanza:'Alabanza'}[u.role]||u.role}</span></td>
-          ${canEdit?`<td style="white-space:nowrap">
+          ${canEdit?`
+          <td>
+            <span id="pw-${u.id}" style="font-family:monospace;font-size:12px;color:var(--sub)">••••••••</span>
+            <button class="btn btn-g btn-xs" style="margin-left:5px" onclick="togglePw('${u.id}','${u.password}')">👁</button>
+          </td>
+          <td style="white-space:nowrap">
             ${u.id!==CU.id?`
               <button class="btn btn-o btn-xs" onclick="editUser('${u.id}')" style="margin-right:4px">✏️</button>
               <button class="btn btn-r btn-xs" onclick="deleteUser('${u.id}')">🗑</button>
@@ -1252,9 +1285,27 @@ function rUsers(){
         </tr>`).join('')}
         </tbody>
       </table></div>
+      ${canEdit?`<p class="xs muted mt8">👁 Toca el ojo para ver la contraseña y pasársela al usuario</p>`:''}
     </div>
   </div>`;
 }
+// Reveal/hide password in users table
+const _pwVisible={};
+function togglePw(userId, encoded){
+  const el=document.getElementById('pw-'+userId);
+  if(!el)return;
+  if(_pwVisible[userId]){
+    el.textContent='••••••••';
+    el.style.color='var(--sub)';
+    _pwVisible[userId]=false;
+  } else {
+    try{ el.textContent=atob(encoded); }
+    catch(e){ el.textContent=encoded; }
+    el.style.color='var(--v2)';
+    _pwVisible[userId]=true;
+  }
+}
+
 function openNewUser(){
   EID.user=null;
   document.getElementById('mo-user-t').textContent='Nuevo Usuario';
